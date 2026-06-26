@@ -20,18 +20,26 @@ import { toast } from "sonner"
 export function ConfigView() {
   const { recargoPct, setRecargo } = useStore()
   const [valor, setValor] = useState(String(recargoPct))
+  const [saving, setSaving] = useState(false)
 
   const pct = Number(valor) || 0
   const ejemploBase = 18000
   const ejemploTotal = Math.round(ejemploBase * (1 + pct / 100))
 
-  function handleSave() {
+  async function handleSave() {
     if (pct < 0 || pct > 100) {
       toast.error("El recargo debe estar entre 0 y 100%")
       return
     }
-    setRecargo(pct)
-    toast.success("Recargo actualizado")
+    setSaving(true)
+    try {
+      await setRecargo(pct)
+      toast.success("Recargo actualizado")
+    } catch {
+      toast.error("Error al guardar el recargo")
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -86,13 +94,13 @@ export function ConfigView() {
             </div>
           </div>
 
-          <Button size="lg" onClick={handleSave}>
-            Guardar recargo
+          <Button size="lg" onClick={handleSave} disabled={saving}>
+            {saving ? "Guardando…" : "Guardar recargo"}
           </Button>
         </CardContent>
       </Card>
 
-      <Card>
+      {/*<Card>
         <CardHeader>
           <CardTitle className="text-base">Acerca de AppCancha</CardTitle>
           <CardDescription>
@@ -100,10 +108,12 @@ export function ConfigView() {
           </CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          Versión demo con datos de prueba. Los cambios se mantienen mientras la
-          sesión esté abierta y se reinician al recargar.
+          Conectado al servidor en{" "}
+          <span className="font-mono">
+            {process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api"}
+          </span>
         </CardContent>
-      </Card>
+      </Card>*/}
     </div>
   )
 }

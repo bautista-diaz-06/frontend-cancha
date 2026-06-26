@@ -38,6 +38,7 @@ const emptyForm: TurnoRequestDTO = {
 export function TurnoSheet({ open, onOpenChange, turno }: TurnoSheetProps) {
   const { addTurno, updateTurno, recargoPct } = useStore()
   const [form, setForm] = useState<TurnoRequestDTO>(emptyForm)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (open) {
@@ -59,19 +60,26 @@ export function TurnoSheet({ open, onOpenChange, turno }: TurnoSheetProps) {
   const recargo = (precioNum * recargoPct) / 100
   const total = precioNum + recargo
 
-  function handleSave() {
+  async function handleSave() {
     if (!form.fecha || !form.hora || !form.precio) {
       toast.error("Completá fecha, hora y precio")
       return
     }
-    if (turno) {
-      updateTurno(turno.id, form)
-      toast.success("Turno actualizado")
-    } else {
-      addTurno(form)
-      toast.success("Turno registrado")
+    setSaving(true)
+    try {
+      if (turno) {
+        await updateTurno(turno.id, form)
+        toast.success("Turno actualizado")
+      } else {
+        await addTurno(form)
+        toast.success("Turno registrado")
+      }
+      onOpenChange(false)
+    } catch {
+      toast.error("Error al guardar el turno. Verificá la conexión con el servidor.")
+    } finally {
+      setSaving(false)
     }
-    onOpenChange(false)
   }
 
   return (
@@ -120,7 +128,7 @@ export function TurnoSheet({ open, onOpenChange, turno }: TurnoSheetProps) {
               placeholder="0"
             />
             <FieldDescription>
-              Recargo ${formatARS(recargo)} · Total ${formatARS(total)}
+              Recargo {formatARS(recargo)} · Total {formatARS(total)}
             </FieldDescription>
           </Field>
 
@@ -169,12 +177,12 @@ export function TurnoSheet({ open, onOpenChange, turno }: TurnoSheetProps) {
         </div>
 
         <SheetFooter>
-          <Button size="lg" onClick={handleSave}>
-            {turno ? "Guardar cambios" : "Registrar turno"}
+          <Button size="lg" onClick={handleSave} disabled={saving}>
+            {saving ? "Guardando…" : turno ? "Guardar cambios" : "Registrar turno"}
           </Button>
           <SheetClose
             render={
-              <Button size="lg" variant="outline">
+              <Button size="lg" variant="outline" disabled={saving}>
                 Cancelar
               </Button>
             }

@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react"
 import { StoreProvider } from "@/lib/store"
+import { useStore } from "@/lib/store"
 import {
   UIActionsProvider,
   type TabKey,
@@ -19,6 +20,8 @@ import { TurnoSheet } from "@/components/forms/turno-sheet"
 import { BebidaSheet } from "@/components/forms/bebida-sheet"
 import { VentaSheet } from "@/components/forms/venta-sheet"
 import { Toaster } from "@/components/ui/sonner"
+import { Button } from "@/components/ui/button"
+import { RefreshCw, ServerCrash } from "lucide-react"
 
 const titles: Record<TabKey, { title: string; subtitle: string }> = {
   inicio: { title: "Inicio", subtitle: "Resumen del día" },
@@ -37,6 +40,7 @@ export function AppShell() {
 }
 
 function ShellInner() {
+  const { loading, error, refresh } = useStore()
   const [tab, setTab] = useState<TabKey>("inicio")
   const [turnoOpen, setTurnoOpen] = useState(false)
   const [bebidaOpen, setBebidaOpen] = useState(false)
@@ -81,11 +85,43 @@ function ShellInner() {
         </header>
 
         <main className="flex-1 px-4 pb-28 pt-4">
-          {tab === "inicio" && <DashboardView />}
-          {tab === "turnos" && <TurnosView />}
-          {tab === "ventas" && <VentasView />}
-          {tab === "reportes" && <ReportesView />}
-          {tab === "config" && <ConfigView />}
+          {/* Estado de carga inicial */}
+          {loading && (
+            <div className="flex flex-col items-center justify-center gap-3 py-20 text-muted-foreground">
+              <RefreshCw className="size-8 animate-spin" />
+              <p className="text-sm">Cargando datos…</p>
+            </div>
+          )}
+
+          {/* Error de conexión */}
+          {!loading && error && (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-destructive/30 bg-destructive/5 px-6 py-10 text-center">
+              <ServerCrash className="size-10 text-destructive" />
+              <div>
+                <p className="font-semibold text-destructive">No se pudo conectar al servidor</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Verificá que el backend esté corriendo y que la URL sea correcta.
+                </p>
+                <p className="mt-2 font-mono text-xs text-muted-foreground">
+                  {process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api"}
+                </p>
+              </div>
+              <Button onClick={refresh} variant="outline" size="sm">
+                <RefreshCw className="size-4" /> Reintentar
+              </Button>
+            </div>
+          )}
+
+          {/* Contenido normal */}
+          {!loading && !error && (
+            <>
+              {tab === "inicio" && <DashboardView />}
+              {tab === "turnos" && <TurnosView />}
+              {tab === "ventas" && <VentasView />}
+              {tab === "reportes" && <ReportesView />}
+              {tab === "config" && <ConfigView />}
+            </>
+          )}
         </main>
 
         <QuickFab />

@@ -61,13 +61,13 @@ export function DashboardView() {
               <DollarSign className="size-4" /> Recaudado hoy
             </CardDescription>
             <CardTitle className="text-3xl tracking-tight">
-              ${formatARS(stats.totalDia)}
+              {formatARS(stats.totalDia)}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-primary-foreground/80">
-              ${formatARS(stats.recaudadoTurnos)} en turnos ·{" "}
-              ${formatARS(stats.recaudadoVentas)} en bebidas
+              {formatARS(stats.recaudadoTurnos)} en turnos ·{" "}
+              {formatARS(stats.recaudadoVentas)} en bebidas
             </p>
           </CardContent>
         </Card>
@@ -115,11 +115,11 @@ export function DashboardView() {
                   <div className="flex items-center gap-2">
                     <span className="font-semibold">{t.hora}</span>
                     <span className="text-muted-foreground">
-                      ${formatARS(t.precio)}
+                      {formatARS(t.precio)}
                     </span>
                   </div>
                   <span className="font-medium">
-                    ${formatARS(t.total || 0)}
+                    {formatARS(t.total || 0)}
                   </span>
                 </li>
               ))}

@@ -30,6 +30,7 @@ export function VentaSheet({ open, onOpenChange }: VentaSheetProps) {
   const { bebidas, addVenta } = useStore()
   const [cart, setCart] = useState<Record<number, number>>({})
   const [query, setQuery] = useState("")
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (open) {
@@ -59,23 +60,30 @@ export function VentaSheet({ open, onOpenChange }: VentaSheetProps) {
 
   const total = items.reduce((s, i) => {
     const b = bebidas.find((x) => x.id === i.bebidaId)
-    return s + (b ? i.cantidad * b.precioVenta : 0)
+    return s + (b ? i.cantidad! * b.precioVenta : 0)
   }, 0)
-  const totalUnidades = items.reduce((s, i) => s + i.cantidad, 0)
+  const totalUnidades = items.reduce((s, i) => s + (i.cantidad ?? 0), 0)
 
   function setQty(id: number, qty: number, max: number) {
     const clamped = Math.max(0, Math.min(qty, max))
     setCart((prev) => ({ ...prev, [id]: clamped }))
   }
 
-  function handleConfirm() {
+  async function handleConfirm() {
     if (items.length === 0) {
       toast.error("Agregá al menos un producto")
       return
     }
-    addVenta(items)
-    toast.success(`Venta registrada · ${formatARS(total)}`)
-    onOpenChange(false)
+    setSaving(true)
+    try {
+      await addVenta(items)
+      toast.success(`Venta registrada · ${formatARS(total)}`)
+      onOpenChange(false)
+    } catch {
+      toast.error("Error al registrar la venta. Verificá la conexión con el servidor.")
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -130,7 +138,7 @@ export function VentaSheet({ open, onOpenChange }: VentaSheetProps) {
                           size="icon"
                           variant="outline"
                           onClick={() => setQty(b.id, qty - 1, b.cantidad)}
-                          disabled={qty === 0}
+                          disabled={qty === 0 || saving}
                           aria-label={`Quitar ${b.nombreProducto}`}
                         >
                           <Minus />
@@ -142,7 +150,7 @@ export function VentaSheet({ open, onOpenChange }: VentaSheetProps) {
                           size="icon"
                           variant="outline"
                           onClick={() => setQty(b.id, qty + 1, b.cantidad)}
-                          disabled={qty >= b.cantidad}
+                          disabled={qty >= b.cantidad || saving}
                           aria-label={`Agregar ${b.nombreProducto}`}
                         >
                           <Plus />
@@ -164,12 +172,16 @@ export function VentaSheet({ open, onOpenChange }: VentaSheetProps) {
             </span>
             <span className="text-xl font-semibold">{formatARS(total)}</span>
           </div>
-          <Button size="lg" onClick={handleConfirm} disabled={items.length === 0}>
-            Confirmar venta
+          <Button
+            size="lg"
+            onClick={handleConfirm}
+            disabled={items.length === 0 || saving}
+          >
+            {saving ? "Registrando…" : "Confirmar venta"}
           </Button>
           <SheetClose
             render={
-              <Button size="lg" variant="outline">
+              <Button size="lg" variant="outline" disabled={saving}>
                 Cancelar
               </Button>
             }

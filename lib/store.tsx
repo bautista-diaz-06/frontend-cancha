@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -16,138 +17,121 @@ import type {
   Venta,
   ItemVenta,
 } from "./types"
-import {
-  RECARGO_INICIAL,
-  bebidasSeed,
-  turnosSeed,
-  ventasSeed,
-} from "./mock-data"
+import * as api from "./api-service"
 
 interface StoreContextValue {
   turnos: Turno[]
   bebidas: Bebida[]
   ventas: Venta[]
   recargoPct: number
+  loading: boolean
+  error: string | null
+  refresh: () => void
   // turnos
-  addTurno: (input: TurnoRequestDTO) => void
-  updateTurno: (id: number, input: TurnoRequestDTO) => void
-  deleteTurno: (id: number) => void
+  addTurno: (input: TurnoRequestDTO) => Promise<void>
+  updateTurno: (id: number, input: TurnoRequestDTO) => Promise<void>
+  deleteTurno: (id: number) => Promise<void>
   // bebidas
-  addBebida: (input: BebidaRequestDTO) => void
-  updateBebida: (id: number, input: BebidaRequestDTO) => void
-  deleteBebida: (id: number) => void
+  addBebida: (input: BebidaRequestDTO) => Promise<void>
+  updateBebida: (id: number, input: BebidaRequestDTO) => Promise<void>
+  deleteBebida: (id: number) => Promise<void>
   // ventas
-  addVenta: (items: ItemVenta[]) => void
+  addVenta: (items: ItemVenta[]) => Promise<void>
   // config
-  setRecargo: (pct: number) => void
+  setRecargo: (pct: number) => Promise<void>
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null)
 
-let nextTurnoId = turnosSeed.length + 1
-let nextBebidaId = bebidasSeed.length + 1
-let nextVentaId = ventasSeed.length + 1
-
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [turnos, setTurnos] = useState<Turno[]>(turnosSeed)
-  const [bebidas, setBebidas] = useState<Bebida[]>(bebidasSeed)
-  const [ventas, setVentas] = useState<Venta[]>(ventasSeed)
-  const [recargoPct, setRecargoPct] = useState<number>(RECARGO_INICIAL)
+  const [turnos, setTurnos] = useState<Turno[]>([])
+  const [bebidas, setBebidas] = useState<Bebida[]>([])
+  const [ventas, setVentas] = useState<Venta[]>([])
+  const [recargoPct, setRecargoPct] = useState<number>(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const addTurno = useCallback(
-    (input: TurnoRequestDTO) => {
-      const recargo = (input.precio * recargoPct) / 100
-      const total = input.precio + recargo
-      setTurnos((prev) => [
-        ...prev,
-        {
-          id: nextTurnoId++,
-          ...input,
-          recargoCobrado: recargo,
-          total,
-        },
+  // ── Carga inicial ──────────────────────────────────────────────────────────
+
+  const fetchAll = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const [t, b, ventasResult, recargo] = await Promise.all([
+        api.getTurnos(),
+        api.getBebidas(),
+        api.getVentas(),     // devuelve ResultadoFiltradoDTO
+        api.getRecargo(),    // devuelve number directamente
       ])
-    },
-    [recargoPct],
-  )
+      setTurnos(t)
+      setBebidas(b)
+      setVentas(ventasResult.ventas)  // extraer el array del wrapper
+      setRecargoPct(recargo)          // ya es number, sin .recargo
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al conectar con el servidor")
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
-  const updateTurno = useCallback((id: number, input: TurnoRequestDTO) => {
-    setTurnos((prev) =>
-      prev.map((t) => {
-        if (t.id === id) {
-          const recargo = (input.precio * recargoPct) / 100
-          const total = input.precio + recargo
-          return { ...input, id, recargoCobrado: recargo, total }
-        }
-        return t
-      }),
-    )
-  }, [recargoPct])
+  useEffect(() => { fetchAll() }, [fetchAll])
 
-  const deleteTurno = useCallback((id: number) => {
+  // ── Turnos ─────────────────────────────────────────────────────────────────
+
+  const addTurno = useCallback(async (input: TurnoRequestDTO) => {
+    const newTurno = await api.createTurno(input)
+    setTurnos((prev) => [...prev, newTurno])
+  }, [])
+
+  const updateTurno = useCallback(async (id: number, input: TurnoRequestDTO) => {
+    const updated = await api.updateTurno(id, input)
+    setTurnos((prev) => prev.map((t) => (t.id === id ? updated : t)))
+  }, [])
+
+  const deleteTurno = useCallback(async (id: number) => {
+    await api.deleteTurno(id)
     setTurnos((prev) => prev.filter((t) => t.id !== id))
   }, [])
 
-  const addBebida = useCallback((input: BebidaRequestDTO) => {
-    setBebidas((prev) => [...prev, { ...input, id: nextBebidaId++ }])
+  // ── Bebidas ────────────────────────────────────────────────────────────────
+
+  const addBebida = useCallback(async (input: BebidaRequestDTO) => {
+    const newBebida = await api.createBebida(input)
+    setBebidas((prev) => [...prev, newBebida])
   }, [])
 
-  const updateBebida = useCallback((id: number, input: BebidaRequestDTO) => {
-    setBebidas((prev) => prev.map((b) => (b.id === id ? { ...b, ...input } : b)))
+  const updateBebida = useCallback(async (id: number, input: BebidaRequestDTO) => {
+    const updated = await api.updateBebida(id, input)
+    setBebidas((prev) => prev.map((b) => (b.id === id ? updated : b)))
   }, [])
 
-  const deleteBebida = useCallback((id: number) => {
+  const deleteBebida = useCallback(async (id: number) => {
+    await api.deleteBebida(id)
     setBebidas((prev) => prev.filter((b) => b.id !== id))
   }, [])
 
-  const addVenta = useCallback((items: ItemVenta[]) => {
-    // Calcular total basado en bebidas
-    let totalVenta = 0
-    const detalles = items
-      .map((item) => {
-        const bebida = bebidas.find((b) => b.id === item.bebidaId)
-        if (!bebida) return null
-        const cant = item.cantidad || 1
-        const subtotal = bebida.precioVenta * cant
-        totalVenta += subtotal
-        return {
-          id: Math.random(),
-          bebidas: {
-            nombreProducto: bebida.nombreProducto,
-            precioCompra: bebida.precioCompra,
-            precioVenta: bebida.precioVenta,
-          },
-          cantidad: cant,
-          precioUnitario: bebida.precioVenta,
-          subtotal,
-        }
-      })
-      .filter(Boolean) as Venta["detalles"]
+  // ── Ventas ─────────────────────────────────────────────────────────────────
 
-    setVentas((prev) => [
-      {
-        id: nextVentaId++,
-        fechaVenta: new Date().toISOString(),
-        totalVenta,
-        detalles,
-      },
-      ...prev,
-    ])
+  const addVenta = useCallback(async (items: ItemVenta[]) => {
+    const venta = await api.createVenta({
+      fechaVenta: new Date().toISOString(),
+      items,
+    })
+    setVentas((prev) => [venta, ...prev])
+    // Refrescar bebidas para que el stock quede actualizado
+    const updatedBebidas = await api.getBebidas()
+    setBebidas(updatedBebidas)
+  }, [])
 
-    // Descontar stock
-    setBebidas((prev) =>
-      prev.map((b) => {
-        const sold = items.find((i) => i.bebidaId === b.id)
-        return sold
-          ? { ...b, cantidad: Math.max(0, b.cantidad - (sold.cantidad || 1)) }
-          : b
-      }),
-    )
-  }, [bebidas])
+  // ── Config ─────────────────────────────────────────────────────────────────
 
-  const setRecargo = useCallback((pct: number) => {
+  const setRecargo = useCallback(async (pct: number) => {
+    // La API devuelve 200 vacío, actualizamos el estado local directamente
+    await api.setRecargo({ recargo: pct })
     setRecargoPct(pct)
   }, [])
+
+  // ── Context value ──────────────────────────────────────────────────────────
 
   const value = useMemo<StoreContextValue>(
     () => ({
@@ -155,6 +139,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       bebidas,
       ventas,
       recargoPct,
+      loading,
+      error,
+      refresh: fetchAll,
       addTurno,
       updateTurno,
       deleteTurno,
@@ -165,18 +152,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setRecargo,
     }),
     [
-      turnos,
-      bebidas,
-      ventas,
-      recargoPct,
-      addTurno,
-      updateTurno,
-      deleteTurno,
-      addBebida,
-      updateBebida,
-      deleteBebida,
-      addVenta,
-      setRecargo,
+      turnos, bebidas, ventas, recargoPct, loading, error, fetchAll,
+      addTurno, updateTurno, deleteTurno,
+      addBebida, updateBebida, deleteBebida,
+      addVenta, setRecargo,
     ],
   )
 

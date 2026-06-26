@@ -115,12 +115,12 @@ export function ReportesView() {
           <CardDescription className="text-primary-foreground/80">
             Total del mes
           </CardDescription>
-          <CardTitle className="text-3xl">${formatARS(totalMes)}</CardTitle>
+          <CardTitle className="text-3xl">{formatARS(totalMes)}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-primary-foreground/80">
-            ${formatARS(data.totalTurnos)} en turnos ·{" "}
-            ${formatARS(data.totalVentas)} en bebidas
+            {formatARS(data.totalTurnos)} en turnos ·{" "}
+            {formatARS(data.totalVentas)} en bebidas
           </p>
         </CardContent>
       </Card>
@@ -174,7 +174,7 @@ export function ReportesView() {
               {data.topProductos.map((p, i) => (
                 <li key={i} className="flex items-center justify-between">
                   <span className="text-muted-foreground">{p.nombre}</span>
-                  <span className="font-medium">${formatARS(p.valor)}</span>
+                  <span className="font-medium">{formatARS(p.valor)}</span>
                 </li>
               ))}
             </ul>

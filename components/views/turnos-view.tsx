@@ -59,9 +59,13 @@ export function TurnosView() {
 
   const totalRecaudado = filtrados.reduce((s, t) => s + (t.total || 0), 0)
 
-  function handleDelete(t: Turno) {
-    deleteTurno(t.id)
-    toast.success("Turno eliminado")
+  async function handleDelete(t: Turno) {
+    try {
+      await deleteTurno(t.id)
+      toast.success("Turno eliminado")
+    } catch {
+      toast.error("Error al eliminar el turno")
+    }
   }
 
   return (
@@ -102,7 +106,7 @@ export function TurnosView() {
             <span className="text-muted-foreground">
               {filtrados.length} turno(s)
             </span>
-            <span className="font-semibold">${formatARS(totalRecaudado)}</span>
+            <span className="font-semibold">{formatARS(totalRecaudado)}</span>
           </div>
         </CardContent>
       </Card>

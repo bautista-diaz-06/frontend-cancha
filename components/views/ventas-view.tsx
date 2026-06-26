@@ -65,7 +65,7 @@ export function VentasView() {
                         {formatDateTime(v.fechaVenta)}
                       </span>
                       <span className="font-semibold">
-                        ${formatARS(v.totalVenta)}
+                        {formatARS(v.totalVenta)}
                       </span>
                     </div>
                     <p className="mt-1 text-sm">

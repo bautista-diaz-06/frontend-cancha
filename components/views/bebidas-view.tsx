@@ -53,9 +53,13 @@ export function BebidasView() {
     0,
   )
 
-  function handleDelete(b: Bebida) {
-    deleteBebida(b.id)
-    toast.success("Producto eliminado")
+  async function handleDelete(b: Bebida) {
+    try {
+      await deleteBebida(b.id)
+      toast.success("Producto eliminado")
+    } catch {
+      toast.error("Error al eliminar el producto")
+    }
   }
 
   return (

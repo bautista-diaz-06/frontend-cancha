@@ -33,6 +33,7 @@ const emptyForm: BebidaRequestDTO = {
 export function BebidaSheet({ open, onOpenChange, bebida }: BebidaSheetProps) {
   const { addBebida, updateBebida } = useStore()
   const [form, setForm] = useState<BebidaRequestDTO>(emptyForm)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (open) {
@@ -49,7 +50,7 @@ export function BebidaSheet({ open, onOpenChange, bebida }: BebidaSheetProps) {
     }
   }, [open, bebida])
 
-  function handleSave() {
+  async function handleSave() {
     if (!form.nombreProducto.trim()) {
       toast.error("Ingresá el nombre del producto")
       return
@@ -70,14 +71,21 @@ export function BebidaSheet({ open, onOpenChange, bebida }: BebidaSheetProps) {
       cantidad: form.cantidad,
     }
 
-    if (bebida) {
-      updateBebida(bebida.id, input)
-      toast.success("Bebida actualizada")
-    } else {
-      addBebida(input)
-      toast.success("Bebida registrada")
+    setSaving(true)
+    try {
+      if (bebida) {
+        await updateBebida(bebida.id, input)
+        toast.success("Bebida actualizada")
+      } else {
+        await addBebida(input)
+        toast.success("Bebida registrada")
+      }
+      onOpenChange(false)
+    } catch {
+      toast.error("Error al guardar el producto. Verificá la conexión con el servidor.")
+    } finally {
+      setSaving(false)
     }
-    onOpenChange(false)
   }
 
   return (
@@ -152,12 +160,12 @@ export function BebidaSheet({ open, onOpenChange, bebida }: BebidaSheetProps) {
         </div>
 
         <SheetFooter>
-          <Button size="lg" onClick={handleSave}>
-            {bebida ? "Guardar cambios" : "Registrar bebida"}
+          <Button size="lg" onClick={handleSave} disabled={saving}>
+            {saving ? "Guardando…" : bebida ? "Guardar cambios" : "Registrar bebida"}
           </Button>
           <SheetClose
             render={
-              <Button size="lg" variant="outline">
+              <Button size="lg" variant="outline" disabled={saving}>
                 Cancelar
               </Button>
             }
