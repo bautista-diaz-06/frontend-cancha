@@ -113,15 +113,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // ── Ventas ─────────────────────────────────────────────────────────────────
 
   const addVenta = useCallback(async (items: ItemVenta[]) => {
-    const venta = await api.createVenta({
-      fechaVenta: new Date().toISOString(),
-      items,
-    })
-    setVentas((prev) => [venta, ...prev])
-    // Refrescar bebidas para que el stock quede actualizado
-    const updatedBebidas = await api.getBebidas()
-    setBebidas(updatedBebidas)
-  }, [])
+  const now = new Date()
+  const localISO = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+    .toISOString()
+    .replace("Z", "")
+
+  const venta = await api.createVenta({
+    fechaVenta: localISO,
+    items,
+  })
+  setVentas((prev) => [venta, ...prev])
+  const updatedBebidas = await api.getBebidas()
+  setBebidas(updatedBebidas)
+}, [])
 
   // ── Config ─────────────────────────────────────────────────────────────────
 

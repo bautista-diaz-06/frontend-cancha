@@ -6,6 +6,7 @@ import type {
   BebidaRequestDTO,
   Turno,
   TurnoRequestDTO,
+  TurnoReporte,
   Venta,
   VentaRequestDTO,
   RequestRecargoDTO,
@@ -13,7 +14,7 @@ import type {
 } from "./types"
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api"
+  process.env.NEXT_PUBLIC_API_URL ?? "http://turnos-cancha.up.railway.app/api"
 
 // ── Helper genérico ──────────────────────────────────────────────────────────
 
@@ -96,3 +97,21 @@ export const getRecargo = (): Promise<number> =>
 
 export const setRecargo = (body: RequestRecargoDTO): Promise<void> =>
   request("/configuracion/", { method: "POST", body: JSON.stringify(body) })
+
+// ── Endpoints de filtrado ─────────────────────────────────────────────────────
+// GET /api/turnos/por-dia?fecha=YYYY-MM-DD  → TurnoReporteDTO
+// GET /api/turnos/por-mes?mes=YYYY-MM       → TurnoReporteDTO
+// GET /api/ventas/por-dia?fecha=YYYY-MM-DD  → ResultadoFiltradoDTO
+// GET /api/ventas/por-mes?mes=YYYY-MM       → ResultadoFiltradoDTO
+
+export const getTurnosPorDia = (fecha: string): Promise<TurnoReporte> =>
+  request(`/turnos/por-dia?fecha=${fecha}`)
+
+export const getTurnosPorMes = (mes: string): Promise<TurnoReporte> =>
+  request(`/turnos/por-mes?mes=${mes}`)
+
+export const getVentasPorDia = (fecha: string): Promise<ResultadoFiltrado> =>
+  request(`/ventas/por-dia?fecha=${fecha}`)
+
+export const getVentasPorMes = (mes: string): Promise<ResultadoFiltrado> =>
+  request(`/ventas/por-mes?mes=${mes}`)

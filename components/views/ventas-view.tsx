@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import {
   Card,
   CardContent,
@@ -8,7 +9,12 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/components/ui/toggle-group"
 import {
   Empty,
   EmptyDescription,
@@ -16,14 +22,33 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { BebidasView } from "./bebidas-view"
-import { useStore } from "@/lib/store"
 import { useUIActions } from "@/lib/ui-actions"
-import { formatARS, formatDateTime } from "@/lib/format"
+import { getVentasPorDia, getVentasPorMes } from "@/lib/api-service"
+import { formatARS, formatDateTime, todayISO, currentMonthISO } from "@/lib/format"
+import type { ResultadoFiltrado } from "@/lib/types"
 import { ShoppingCart } from "lucide-react"
+import { useStore } from "@/lib/store"
 
 export function VentasView() {
-  const { ventas } = useStore()
   const { openVenta } = useUIActions()
+  const [modo, setModo] = useState<"dia" | "mes">("dia")
+  const [fecha, setFecha] = useState(todayISO())
+  const [mes, setMes] = useState(currentMonthISO())
+  const [data, setData] = useState<ResultadoFiltrado | null>(null)
+  const [loading, setLoading] = useState(false)
+  const { ventas: storeVentas } = useStore()
+
+  useEffect(() => {
+    setLoading(true)
+    const fn =
+      modo === "dia"
+        ? getVentasPorDia(fecha)
+        : getVentasPorMes(mes)
+    fn.then(setData).catch(() => setData(null)).finally(() => setLoading(false))
+  }, [modo, fecha, mes, storeVentas.length])
+
+  const ventas = data?.ventas ?? []
+  const total = data?.resumen?.totalResumen ?? 0
 
   return (
     <Tabs defaultValue="registrar" className="gap-4">
@@ -41,18 +66,60 @@ export function VentasView() {
           <ShoppingCart /> Registrar venta
         </Button>
 
+        {/* Filtro día / mes */}
+        <Card>
+          <CardContent className="flex flex-col gap-3 pt-4">
+            <ToggleGroup
+              value={[modo]}
+              onValueChange={(v) => v[0] && setModo(v[0] as "dia" | "mes")}
+              variant="outline"
+              className="w-full"
+            >
+              <ToggleGroupItem value="dia" className="flex-1">
+                Por día
+              </ToggleGroupItem>
+              <ToggleGroupItem value="mes" className="flex-1">
+                Por mes
+              </ToggleGroupItem>
+            </ToggleGroup>
+            {modo === "dia" ? (
+              <Input
+                type="date"
+                value={fecha}
+                onChange={(e) => setFecha(e.target.value)}
+              />
+            ) : (
+              <Input
+                type="month"
+                value={mes}
+                onChange={(e) => setMes(e.target.value)}
+              />
+            )}
+            <div className="flex items-center justify-between rounded-lg bg-muted px-3 py-2 text-sm">
+              <span className="text-muted-foreground">
+                {ventas.length} venta(s)
+              </span>
+              <span className="font-semibold">{formatARS(total)}</span>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Historial de ventas</CardTitle>
-            <CardDescription>Últimos consumos registrados.</CardDescription>
+            <CardTitle className="text-base">Historial</CardTitle>
+            <CardDescription>Consumos del período seleccionado.</CardDescription>
           </CardHeader>
           <CardContent>
-            {ventas.length === 0 ? (
+            {loading ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                Cargando…
+              </p>
+            ) : ventas.length === 0 ? (
               <Empty className="py-6">
                 <EmptyHeader>
                   <EmptyTitle>Sin ventas</EmptyTitle>
                   <EmptyDescription>
-                    Registrá tu primera venta de bebidas.
+                    No hay ventas registradas en este período.
                   </EmptyDescription>
                 </EmptyHeader>
               </Empty>
@@ -69,7 +136,7 @@ export function VentasView() {
                       </span>
                     </div>
                     <p className="mt-1 text-sm">
-                      {v.detalles
+                      {(v.detalles ?? [])
                         .map((d) => `${d.cantidad}× ${d.bebidas.nombreProducto}`)
                         .join(" · ")}
                     </p>

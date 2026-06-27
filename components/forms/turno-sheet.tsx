@@ -88,7 +88,7 @@ export function TurnoSheet({ open, onOpenChange, turno }: TurnoSheetProps) {
         <SheetHeader>
           <SheetTitle>{turno ? "Editar turno" : "Nuevo turno"}</SheetTitle>
           <SheetDescription>
-            Recargo {recargoPct}% se aplica automáticamente al precio base.
+            El recargo del {recargoPct}% se aplica sobre el monto en transferencia.
           </SheetDescription>
         </SheetHeader>
 

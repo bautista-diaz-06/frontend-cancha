@@ -130,7 +130,7 @@ export function TurnosView() {
             >
               <div className="flex size-12 shrink-0 flex-col items-center justify-center rounded-md bg-primary/10 text-primary">
                 <span className="text-sm font-semibold leading-none">
-                  {t.hora}
+                  {t.hora.slice(0, 5)}
                 </span>
                 <span className="mt-0.5 text-[10px] text-muted-foreground">
                   {t.fecha.split("-")[2]}
@@ -140,13 +140,13 @@ export function TurnosView() {
                 <p className="text-sm font-medium text-muted-foreground">
                   Precio base
                 </p>
-                <p className="font-semibold">${formatARS(t.precio)}</p>
+                <p className="font-semibold">{formatARS(t.precio)}</p>
               </div>
               <div className="flex flex-col items-end gap-1">
                 <p className="text-xs text-muted-foreground">
-                  Recargo ${formatARS(t.recargoCobrado || 0)}
+                  Recargo {formatARS(t.recargoCobrado || 0)}
                 </p>
-                <p className="font-bold">${formatARS(t.total || 0)}</p>
+                <p className="font-bold">{formatARS(t.total || 0)}</p>
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger
