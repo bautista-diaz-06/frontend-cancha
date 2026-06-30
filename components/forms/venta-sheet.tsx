@@ -12,11 +12,12 @@ import {
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Field, FieldLabel } from "@/components/ui/field"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty"
 import { useStore } from "@/lib/store"
-import { formatARS } from "@/lib/format"
+import { formatARS, todayISO } from "@/lib/format"
 import type { ItemVenta } from "@/lib/types"
 import { Minus, Plus, Search } from "lucide-react"
 import { toast } from "sonner"
@@ -30,12 +31,14 @@ export function VentaSheet({ open, onOpenChange }: VentaSheetProps) {
   const { bebidas, addVenta } = useStore()
   const [cart, setCart] = useState<Record<number, number>>({})
   const [query, setQuery] = useState("")
+  const [fecha, setFecha] = useState(todayISO())
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (open) {
       setCart({})
       setQuery("")
+      setFecha(todayISO())
     }
   }, [open])
 
@@ -74,9 +77,13 @@ export function VentaSheet({ open, onOpenChange }: VentaSheetProps) {
       toast.error("Agregá al menos un producto")
       return
     }
+    if (!fecha) {
+      toast.error("Elegí una fecha para la venta")
+      return
+    }
     setSaving(true)
     try {
-      await addVenta(items)
+      await addVenta(items, fecha)
       toast.success(`Venta registrada · ${formatARS(total)}`)
       onOpenChange(false)
     } catch {
@@ -95,6 +102,19 @@ export function VentaSheet({ open, onOpenChange }: VentaSheetProps) {
         </SheetHeader>
 
         <div className="px-4">
+          <Field>
+            <FieldLabel htmlFor="v-fecha">Fecha de la venta</FieldLabel>
+            <Input
+              id="v-fecha"
+              type="date"
+              max={todayISO()}
+              value={fecha}
+              onChange={(e) => setFecha(e.target.value)}
+            />
+          </Field>
+        </div>
+
+        <div className="px-4 pt-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input

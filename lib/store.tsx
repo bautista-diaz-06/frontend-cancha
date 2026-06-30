@@ -18,6 +18,7 @@ import type {
   ItemVenta,
 } from "./types"
 import * as api from "./api-service"
+import { toISODate } from "./format"
 
 interface StoreContextValue {
   turnos: Turno[]
@@ -36,7 +37,7 @@ interface StoreContextValue {
   updateBebida: (id: number, input: BebidaRequestDTO) => Promise<void>
   deleteBebida: (id: number) => Promise<void>
   // ventas
-  addVenta: (items: ItemVenta[]) => Promise<void>
+  addVenta: (items: ItemVenta[], fecha?: string) => Promise<void>
   // config
   setRecargo: (pct: number) => Promise<void>
 }
@@ -112,11 +113,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   // ── Ventas ─────────────────────────────────────────────────────────────────
 
-  const addVenta = useCallback(async (items: ItemVenta[]) => {
+  const addVenta = useCallback(async (items: ItemVenta[], fecha?: string) => {
   const now = new Date()
-  const localISO = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-    .toISOString()
-    .replace("Z", "")
+  // Si se eligió una fecha (ej. carga retroactiva), se usa esa fecha
+  // combinada con la hora actual. Si no, se usa la fecha y hora de hoy.
+  const baseDate = fecha ?? toISODate(now)
+  const timePart = now.toTimeString().slice(0, 8) // HH:mm:ss
+  const localISO = `${baseDate}T${timePart}`
 
   const venta = await api.createVenta({
     fechaVenta: localISO,
