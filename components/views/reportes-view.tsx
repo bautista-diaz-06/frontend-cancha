@@ -33,7 +33,7 @@ import {
 
 const chartConfig = {
   turnos: { label: "Turnos", color: "var(--chart-1)" },
-  ventas: { label: "Bebidas", color: "var(--chart-2)" },
+  ventas: { label: "Bebidas (ganancia)", color: "var(--chart-2)" },
 } satisfies ChartConfig
 
 const PIE_COLORS = [
@@ -67,7 +67,7 @@ export function ReportesView() {
       .filter((v) => v.fechaVenta.slice(0, 7) === mes)
       .forEach((v) => {
         const d = Number(v.fechaVenta.slice(8, 10)) - 1
-        if (porDia[d]) porDia[d].ventas += v.totalVenta
+        if (porDia[d]) porDia[d].ventas += v.gananciaReal
       })
 
     const totalTurnos = porDia.reduce((s, d) => s + d.turnos, 0)
@@ -120,7 +120,7 @@ export function ReportesView() {
         <CardContent>
           <p className="text-sm text-primary-foreground/80">
             {formatARS(data.totalTurnos)} en turnos ·{" "}
-            {formatARS(data.totalVentas)} en bebidas
+            {formatARS(data.totalVentas)} de ganancia en bebidas
           </p>
         </CardContent>
       </Card>

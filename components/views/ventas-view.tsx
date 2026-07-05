@@ -49,6 +49,7 @@ export function VentasView() {
 
   const ventas = data?.ventas ?? []
   const total = data?.resumen?.totalResumen ?? 0
+  const gananciaReal = data?.resumen?.gananciaReal ?? 0
 
   return (
     <Tabs defaultValue="registrar" className="gap-4">
@@ -101,6 +102,12 @@ export function VentasView() {
               </span>
               <span className="font-semibold">{formatARS(total)}</span>
             </div>
+            <div className="flex items-center justify-between rounded-lg bg-muted px-3 py-2 text-sm">
+              <span className="text-muted-foreground">Ganancia real</span>
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                {formatARS(gananciaReal)}
+              </span>
+            </div>
           </CardContent>
         </Card>
 
@@ -139,6 +146,9 @@ export function VentasView() {
                       {(v.detalles ?? [])
                         .map((d) => `${d.cantidad}× ${d.bebidas.nombreProducto}`)
                         .join(" · ")}
+                    </p>
+                    <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
+                      Ganancia: {formatARS(v.gananciaReal)}
                     </p>
                   </li>
                 ))}

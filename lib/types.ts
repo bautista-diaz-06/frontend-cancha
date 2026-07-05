@@ -56,6 +56,7 @@ export interface Venta {
   id: number
   fechaVenta: string // ISO datetime
   totalVenta: number
+  gananciaReal: number
   detalles: DetalleVenta[]
 }
 
@@ -66,6 +67,7 @@ export interface VentaRequestDTO {
 
 export interface ResumenVenta {
   totalResumen: number
+  gananciaReal: number
 }
 
 export interface ResultadoFiltrado {
