@@ -14,7 +14,7 @@ import type {
 } from "./types"
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://turnos-cancha.up.railway.app/api"
+  process.env.NEXT_PUBLIC_API_URL
 
 // ── Helper genérico ──────────────────────────────────────────────────────────
 
