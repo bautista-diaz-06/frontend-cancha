@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   description:
     'Gestión de turnos, ventas de bebidas y reportes para complejos de fútbol 5.',
   generator: 'v0.app',
+  manifest: '/manifest.webmanifest',
   icons: {
     icon: [
       {
