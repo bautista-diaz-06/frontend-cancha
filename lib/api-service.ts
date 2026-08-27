@@ -16,16 +16,31 @@ import type {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL
 
+  async function getAccessToken(): Promise<string | null> {
+  try {
+    const res = await fetch("/api/token")
+    if (!res.ok) return null
+    const data = await res.json()
+    return data.token ?? null
+  } catch {
+    return null
+  }
+}
+
 // ── Helper genérico ──────────────────────────────────────────────────────────
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = await getAccessToken()   // ← nueva
+
   const res = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),   // ← nueva
       ...(init?.headers ?? {}),
     },
     ...init,
   })
+  // ... el resto del archivo queda exactamente igual
 
   if (!res.ok) {
     const msg = await res.text().catch(() => res.statusText)

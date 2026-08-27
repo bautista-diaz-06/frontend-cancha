@@ -1,6 +1,9 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
+import { redirect } from 'next/navigation'
+import { Auth0Provider } from '@auth0/nextjs-auth0'
+import { auth0 } from '@/lib/auth0'
 import './globals.css'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
@@ -42,18 +45,20 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
+  const session = await auth0.getSession()
+  if (!session) {
+    redirect('/auth/login')
+  }
+
   return (
-    <html
-      lang="es"
-      className={`light ${geistSans.variable} ${geistMono.variable} bg-background`}
-    >
+    <html lang="es" className={`light ${geistSans.variable} ${geistMono.variable} bg-background`}>
       <body className="font-sans antialiased">
-        {children}
+        <Auth0Provider user={session.user}>
+          {children}
+        </Auth0Provider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

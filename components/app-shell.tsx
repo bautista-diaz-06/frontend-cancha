@@ -20,8 +20,9 @@ import { TurnoSheet } from "@/components/forms/turno-sheet"
 import { BebidaSheet } from "@/components/forms/bebida-sheet"
 import { VentaSheet } from "@/components/forms/venta-sheet"
 import { Toaster } from "@/components/ui/sonner"
-import { Button } from "@/components/ui/button"
-import { RefreshCw, ServerCrash } from "lucide-react"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { RefreshCw, ServerCrash, LogOut } from "lucide-react"
+import { useUser } from "@auth0/nextjs-auth0"
 
 const titles: Record<TabKey, { title: string; subtitle: string }> = {
   inicio: { title: "Inicio", subtitle: "Resumen del día" },
@@ -41,6 +42,7 @@ export function AppShell() {
 
 function ShellInner() {
   const { loading, error, refresh } = useStore()
+  const { user } = useUser()
   const [tab, setTab] = useState<TabKey>("inicio")
   const [turnoOpen, setTurnoOpen] = useState(false)
   const [bebidaOpen, setBebidaOpen] = useState(false)
@@ -71,18 +73,33 @@ function ShellInner() {
     <UIActionsProvider value={actions}>
       <div className="mx-auto flex min-h-dvh max-w-lg flex-col">
         <header className="sticky top-0 z-30 border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-          <div className="flex items-center gap-2">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <span className="text-sm font-bold">A</span>
-            </div>
-            <div>
-              <h1 className="text-base font-semibold leading-tight">
-                {header.title}
-              </h1>
-              <p className="text-xs text-muted-foreground">{header.subtitle}</p>
-            </div>
-          </div>
-        </header>
+  <div className="flex items-center justify-between gap-2">
+    <div className="flex items-center gap-2">
+      <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+        <span className="text-sm font-bold">A</span>
+      </div>
+      <div>
+        <h1 className="text-base font-semibold leading-tight">{header.title}</h1>
+        <p className="text-xs text-muted-foreground">{header.subtitle}</p>
+      </div>
+    </div>
+
+    {user && (
+      <div className="flex items-center gap-2">
+        <span className="hidden text-xs text-muted-foreground sm:inline">
+          {user.name ?? user.email}
+        </span>
+        <a
+          href="/auth/logout"
+          aria-label="Cerrar sesión"
+          className={buttonVariants({ variant: "ghost", size: "icon" })}
+        >
+          <LogOut className="size-4" />
+        </a>
+      </div>
+    )}
+  </div>
+</header>
 
         <main className="flex-1 px-4 pb-28 pt-4">
           {/* Estado de carga inicial */}
